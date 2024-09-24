@@ -189,7 +189,7 @@ static void drawBack() {
     }
 }
 
-static LP_TIMER(50, []() {
+LP_TIMER(50, []() {
     applyBright();
     if (db[kk::night_mode] && photo.getFilt() < db[kk::night_trsh].toInt()) {
         matrix.clear();

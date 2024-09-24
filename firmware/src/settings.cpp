@@ -106,12 +106,12 @@ static void build(sets::Builder& b) {
     }
 }
 
-static LP_LISTENER_("wifi_connect", []() {
+LP_LISTENER_("wifi_connect", []() {
     db.update();
     WiFiConnector.connect(db[kk::wifi_ssid], db[kk::wifi_pass]);
 });
 
-static LP_TICKER([]() {
+LP_TICKER([]() {
     if (Looper.thisSetup()) {
         LittleFS.begin();
         db.begin();
@@ -159,6 +159,6 @@ static LP_TICKER([]() {
     NTP.tick();
 });
 
-static LP_TIMER(24ul * 60 * 60 * 1000, []() {
+LP_TIMER(24ul * 60 * 60 * 1000, []() {
     ota.checkUpdate();
 });
