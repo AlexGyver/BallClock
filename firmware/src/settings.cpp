@@ -13,7 +13,7 @@
 AutoOTA ota(PROJECT_VER, PROJECT_URL);
 
 GyverDBFile db(&LittleFS, "/data.db");
-static SettingsESP sett(PROJECT_NAME, &db);
+static SettingsESP sett(PROJECT_NAME " v" PROJECT_VER, &db);
 
 static void update(sets::Updater& u) {
     String s;
@@ -110,7 +110,7 @@ static void build(sets::Builder& b) {
     }
     
     Looper.getTimer("redraw")->restart(100);
-    if (b.Button("restart"_h, "restart")) ESP.restart();
+    // if (b.Button("restart"_h, "restart")) ESP.restart();
 }
 
 LP_LISTENER_("wifi_connect", []() {

@@ -1,7 +1,7 @@
 {
   "name": "BallClock",
   "about": "Часы из шариков для пинг-понга",
-  "version": "1.0",
+  "version": "1.1",
   "notes": "Релиз",
   "builds": [
     {
