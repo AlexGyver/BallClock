@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Font Editor</title>
+
+    <style>
+        body {
+            background-color: #232323;
+            font-family: 'Courier New', Courier, monospace;
+            user-select: none;
+        }
+
+        .box {
+            display: block;
+            position: relative;
+            height: 11px;
+            width: 11px;
+            cursor: pointer;
+            margin: 0.5px;
+        }
+
+        .box input {
+            position: absolute;
+            opacity: 0;
+            height: 0;
+            width: 0;
+        }
+
+        .mark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 11px;
+            width: 11px;
+            background-color: #0d0d0d;
+            margin: 0.5px;
+        }
+
+        .box:hover input~.mark {
+            background-color: #414141;
+        }
+
+        .box input:checked~.mark {
+            background-color: #11a900;
+        }
+
+        .mark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        #letters {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .editor_cont {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px;
+        }
+
+        .editor_label {
+            background: #5d5d5d;
+            width: 100%;
+            text-align: center;
+        }
+
+        .editor_cols {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .editor_col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 17px;
+            display: inline-block;
+            max-width: 1000px;
+            width: 100%;
+            background: #191919;
+            outline: none;
+            border: none;
+            color: #0d8100;
+            padding: 10px;
+            margin: 5px;
+            border-radius: 6px;
+        }
+
+        .small {
+            width: unset;
+            padding: 5px;
+        }
+
+        .input::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+
+        .input::-webkit-scrollbar-track {
+            background: #0000;
+        }
+
+        .input::-webkit-scrollbar-thumb {
+            background: #0d8100;
+            border-radius: 4px;
+        }
+
+        .cont {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cont">
+        <textarea id="code_output" class="input" rows="15"></textarea>
+    </div>
+    <div class="cont">
+        <input type="text" class="input small" size="2" id="letter_width" value="5">
+        <input type="text" class="input small" size="2" id="letter_height" value="8">
+        <select class="input small" id="letter_from"></select>
+        <select class="input small" id="letter_to"></select>
+        <button class="input small" onclick="create_h()">Create</button>
+        <button class="input small" onclick="paste_h()">Paste from clipboard</button>
+        <button class="input small" onclick="copy_h()">Copy to clipboard</button>
+    </div>
+
+    <div id="letters" class="letters"></div>
+
+    <script>
+        const alphabet = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмнопрстуфхцчшщъыьэюяЁё";
+        let w, h, from, to;
+        let prevCheck = null;
+
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        document.addEventListener("DOMContentLoaded", () => {
+            letter_from.innerHTML = letter_to.innerHTML = alphabet.split('').map(x => `<option value='${alphabet.indexOf(x)}'>${x}</option>`).join('');
+            letter_to.value = alphabet.indexOf('ё');
+        });
+
+        function init() {
+            w = Number(letter_width.value);
+            h = Number(letter_height.value);
+            from = Number(letter_from.value);
+            to = Number(letter_to.value);
+        }
+
+        async function copy_h() {
+            await navigator.clipboard.writeText(code_output.textContent);
+        }
+
+        async function paste_h() {
+            const text = await navigator.clipboard.readText();
+            let data = [...text.matchAll(/0x../g)].map(x => parseInt(x[0]));
+            let info = text.match(/{(\w.+)}/)[1].split(',').map(x => x.trim());
+
+            from = Number(info[1]);
+            to = Number(info[2]);
+            w = Number(info[3]);
+            h = Number(info[4]);
+            let blocks = Math.ceil(h / 8);
+
+            let render = '';
+            for (let ch = from; ch <= to; ch++) {
+                render += `<div class="editor_cont"><div class="editor_cols" id="glyph_${ch}">`;
+                for (let x = 0; x < w; x++) {
+                    render += `<div class="editor_col">`;
+                    for (let y = 0; y < h; y++) {
+                        render += `
+                        <label class="box">
+                            <input type="checkbox" ${((data[(ch - from) * w * blocks + x * blocks + Math.floor(y / 8)] >> (y % 8)) & 1) ? 'checked' : ''}>
+                            <span class="mark" onclick="click_h(event,this);update_out()" onmousemove="move_h(event, this)" oncontextmenu="return false;"></span>
+                        </label>`;
+                    }
+                    render += `</div>`;
+                }
+                render += `</div><label class="editor_label">${alphabet[ch]}</label></div>`;
+            }
+            letters.innerHTML = render;
+            setTimeout(update_out, 1);
+        }
+
+        function click_h(e, el) {
+            let check = el.previousElementSibling;
+            prevCheck = null;
+            check.checked = !check.checked;
+            check.click();
+            setTimeout(update_out, 1);
+        }
+
+        function move_h(e, el) {
+            let check = el.previousElementSibling;
+            if (e.buttons && prevCheck != check) {
+                check.checked = (e.buttons == 1) ? true : false;
+                prevCheck = check;
+                setTimeout(update_out, 1);
+            }
+        }
+
+        function update_out() {
+            let code = `#pragma once
+#include <Arduino.h>
+#include <FontGFX.h>
+
+// font_${w}x${h}
+// glyphs: ${alphabet.slice(from, to + 1)}
+// ${w * Math.ceil(h / 8) * (to + 1 - from)} Bytes
+
+const uint8_t _font_${w}x${h}_${from}_${to}[] PROGMEM = {
+`;
+            for (let ch = from; ch <= to; ch++) {
+                code += '    ';
+                let glyph = document.getElementById(`glyph_${ch}`);
+                for (let col = 0; col < glyph.children.length; col++) {
+                    let byte = 0;
+                    for (let box = 0, block = 0; box < h; box++) {
+                        let bit = glyph.children[col].children[box].children[0].checked;
+                        byte |= bit << block;
+                        if (box == h - 1 || block == 7) {
+                            code += `0x${byte.toString(16).padStart(2, 0)}, `;
+                            byte = 0;
+                            block = 0;
+                        } else {
+                            block++;
+                        }
+                    }
+                }
+                code += ` // ${alphabet[ch]} (${ch})\r\n`;
+            }
+            code += '};\r\n\r\n'
+            code += `const gfx_map_font_t font_${w}x${h} PROGMEM = {_font_${w}x${h}_${from}_${to}, ${from}, ${to}, ${w}, ${h}};`;
+            code_output.textContent = code;
+        }
+
+        function create_h() {
+            init();
+            let render = '';
+            for (let ch = from; ch <= to; ch++) {
+                render += `<div class="editor_cont"><div class="editor_cols" id="glyph_${ch}">`;
+                for (let x = 0; x < w; x++) {
+                    render += `<div class="editor_col">`;
+                    for (let y = 0; y < h; y++) {
+                        render += `
+                        <label class="box">
+                            <input type="checkbox">
+                            <span class="mark" onclick="click_h(event,this);update_out()" onmousemove="move_h(event, this)"></span>
+                        </label>`;
+                    }
+                    render += `</div>`;
+                }
+                render += `</div><label class="editor_label">${alphabet[ch]}</label></div>`;
+            }
+            letters.innerHTML = render;
+            setTimeout(update_out, 1);
+        }
+    </script>
+</body>
+
+</html>

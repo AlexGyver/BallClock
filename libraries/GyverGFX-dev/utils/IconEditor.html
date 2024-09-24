@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon Editor</title>
+
+    <style>
+        body {
+            background-color: #232323;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .box {
+            display: block;
+            position: relative;
+            height: 20px;
+            width: 20px;
+            cursor: pointer;
+            margin: 0.5px;
+        }
+
+        .box input {
+            position: absolute;
+            opacity: 0;
+            height: 0;
+            width: 0;
+        }
+
+        .mark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 20px;
+            width: 20px;
+            background-color: #0d0d0d;
+            margin: 0.5px;
+        }
+
+        .box:hover input~.mark {
+            background-color: #414141;
+        }
+
+        .box input:checked~.mark {
+            background-color: #11a900;
+        }
+
+        .mark:after {
+            content: "";
+            position: absolute;
+            display: none;
+        }
+
+        #main_cont {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .editor_cont {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 5px;
+        }
+
+        .editor_label {
+            background: #5d5d5d;
+            width: 100%;
+            text-align: center;
+        }
+
+        .editor_cols {
+            display: flex;
+            flex-direction: row;
+        }
+
+        .editor_col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input {
+            margin: 15px 5px;
+            display: block;
+            background: #191919;
+            outline: none;
+            border: none;
+            color: #12b400;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .btn {
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #141414;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="row">
+        <input type="number" class="input" style="width: 50px;font-size:18px" value="8" onchange="init(this.value)">
+        <button class="input btn" onclick="init(amount)">Clear</button>
+    </div>
+
+    <div id="editor_cont" class="editor_cont"></div>
+
+    <div class="row">
+        <textarea type="text" class="input" style="width: 400px" id="code_out" rows="2"></textarea>
+        <button class="input btn" onclick="navigator.clipboard.writeText(code_out.value)">Copy</button>
+    </div>
+
+    <script>
+        let amount = 8;
+
+        function init(num) {
+            amount = num;
+            let render = '<div class="editor_cols">';
+            for (let i = 0; i < amount; i++) {
+                render += '<div class="editor_col">';
+                for (let bit = 0; bit < 8; bit++) {
+                    render += `
+                        <label class="box">
+                            <input type="checkbox" id="ch_${i}_${bit}" onclick="update_out()">
+                            <span class="mark"></span>
+                        </label>`;
+                }
+                render += `</div>`;
+            }
+            render += `</div>`;
+            editor_cont.innerHTML = render;
+            update_out();
+        }
+        function update_out() {
+            let code = `gfxicon_t icon[] PROGMEM = {${amount}, `;
+            for (let i = 0; i < amount; i++) {
+                let byte = 0;
+                for (let bit = 0; bit < 8; bit++) {
+                    byte >>= 1;
+                    if (document.getElementById(`ch_${i}_${bit}`).checked) {
+                        byte |= (1 << 7);
+                    }
+                }
+                code += `0x${byte.toString(16).padStart(2, 0)}`;
+                if (i != amount - 1) code += ', ';
+            }
+            code += '};'
+            code_out.value = code;
+        }
+
+        init(amount);
+    </script>
+</body>
+
+</html>
