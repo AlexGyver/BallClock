@@ -28,7 +28,7 @@ static void update(sets::Updater& u) {
     u.update("local_time"_h, NTP.timeToString());
     u.update("synced"_h, NTP.synced());
     if (ota.hasUpdate()) u.update("ota_update"_h, F("Доступно обновление. Обновить прошивку?"));
-    
+
     Looper.getTimer("redraw")->restart(100);
 }
 
@@ -100,7 +100,12 @@ static void build(sets::Builder& b) {
         }
     }
 
-    if (b.Confirm("ota_update"_h)) ota.update();
+    if (b.Confirm("ota_update"_h)) {
+        if (b.build().value().toBool()) {
+            Serial.println("OTA update!");
+            ota.update();
+        }
+    }
 
     if (b.build().isAction()) {
         switch (b.build().id()) {
@@ -108,7 +113,7 @@ static void build(sets::Builder& b) {
             case kk::ntp_host: NTP.setHost(b.build().value()); break;
         }
     }
-    
+
     Looper.getTimer("redraw")->restart(100);
     // if (b.Button("restart"_h, "restart")) ESP.restart();
 }
