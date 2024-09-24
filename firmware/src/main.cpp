@@ -39,6 +39,8 @@ void setup() {
         Serial.print("Connected: ");
         Serial.println(WiFi.localIP());
         if (db[kk::show_ip]) runString(WiFi.localIP().toString());
+        
+        ota.checkUpdate();
     });
 
     WiFiConnector.onError([]() {

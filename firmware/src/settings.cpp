@@ -1,6 +1,5 @@
 #include "settings.h"
 
-#include <AutoOTA.h>
 #include <GyverNTP.h>
 #include <LittleFS.h>
 #include <Looper.h>
@@ -11,10 +10,10 @@
 #include "palettes.h"
 #include "redraw.h"
 
-GyverDBFile db(&LittleFS, "/data.db");
+AutoOTA ota(PROJECT_VER, PROJECT_URL);
 
+GyverDBFile db(&LittleFS, "/data.db");
 static SettingsESP sett(PROJECT_NAME, &db);
-static AutoOTA ota(PROJECT_VER, PROJECT_URL);
 
 static void update(sets::Updater& u) {
     String s;
@@ -29,6 +28,8 @@ static void update(sets::Updater& u) {
     u.update("local_time"_h, NTP.timeToString());
     u.update("synced"_h, NTP.synced());
     if (ota.hasUpdate()) u.update("ota_update"_h, F("Доступно обновление. Обновить прошивку?"));
+    
+    Looper.getTimer("redraw")->restart(100);
 }
 
 static void build(sets::Builder& b) {
@@ -41,12 +42,15 @@ static void build(sets::Builder& b) {
     {
         sets::Group g(b, "Фон");
 
-        b.Select(kk::back_mode, "Фон", "Градиент;Перлин");
-        b.Select(kk::back_pal, "Палитра", getPaletteList());
-        b.Slider(kk::back_bright, "Яркость", 0, 255);
-        b.Slider(kk::back_speed, "Скорость");
-        b.Slider(kk::back_scale, "Масштаб");
-        b.Slider(kk::back_angle, "Угол", -180, 180);
+        if (b.Select(kk::back_mode, "Фон", "Нет;Градиент;Перлин")) b.reload();
+
+        if (db[kk::back_mode].toInt()) {
+            b.Select(kk::back_pal, "Палитра", getPaletteList());
+            b.Slider(kk::back_bright, "Яркость", 0, 255);
+            b.Slider(kk::back_speed, "Скорость");
+            b.Slider(kk::back_scale, "Масштаб");
+            b.Slider(kk::back_angle, "Угол", -180, 180);
+        }
     }
     {
         sets::Group g(b, "Яркость");
@@ -104,6 +108,9 @@ static void build(sets::Builder& b) {
             case kk::ntp_host: NTP.setHost(b.build().value()); break;
         }
     }
+    
+    Looper.getTimer("redraw")->restart(100);
+    if (b.Button("restart"_h, "restart")) ESP.restart();
 }
 
 LP_LISTENER_("wifi_connect", []() {
@@ -137,7 +144,7 @@ LP_TICKER([]() {
         db.init(kk::clock_style, 1);
         db.init(kk::clock_color, 0xffffff);
 
-        db.init(kk::back_mode, 0);
+        db.init(kk::back_mode, 1);
         db.init(kk::back_pal, 0);
         db.init(kk::back_bright, 200);
         db.init(kk::back_speed, 50);
@@ -162,3 +169,7 @@ LP_TICKER([]() {
 LP_TIMER(24ul * 60 * 60 * 1000, []() {
     ota.checkUpdate();
 });
+
+// LP_TIMER(1000, []() {
+//     Serial.println(ESP.getFreeHeap());
+// });

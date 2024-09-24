@@ -18,11 +18,7 @@ void BallMatrix::begin() {
 }
 
 void BallMatrix::update() {
-    delay(0);
-    yield();
     strip.show();
-    delay(0);
-    yield();
 }
 
 void BallMatrix::setBright(uint8_t bright) {

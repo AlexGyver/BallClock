@@ -1,7 +1,10 @@
 #pragma once
 
 #include <GyverDBFile.h>
+#include <AutoOTA.h>
+
 extern GyverDBFile db;
+extern AutoOTA ota;
 
 DB_KEYS(
     kk,
@@ -26,7 +29,7 @@ DB_KEYS(
     clock_style,
     clock_color,
 
-    back_mode,  // 0 grad, 1 perlin
+    back_mode,  // 0 none, 1 grad, 2 perlin
     back_pal,
     back_speed,
     back_angle,

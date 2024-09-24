@@ -157,8 +157,13 @@ static void drawBack() {
     matrix.setModeXY();
 
     switch (db[kk::back_mode].toInt()) {
+        // none
+        case 0:
+            matrix.clear();
+            break;
+
         // grad
-        case 0: {
+        case 1: {
             GradData data(0, 0, matrix.width(), matrix.height(), db[kk::back_angle]);
             data.pal = pal;
             data.bright = bright;
@@ -177,7 +182,7 @@ static void drawBack() {
         } break;
 
         // perlin
-        case 1:
+        case 2:
             for (int y = 0; y < matrix.height(); y++) {
                 for (int x = 0; x < matrix.width(); x++) {
                     if (matrix.ledXY(x, y) < 0) continue;
@@ -189,8 +194,11 @@ static void drawBack() {
     }
 }
 
-LP_TIMER(50, []() {
+LP_TIMER_("redraw", 50, []() {
+    Looper.thisTimer()->restart(50);
+    
     applyBright();
+
     if (db[kk::night_mode] && photo.getFilt() < db[kk::night_trsh].toInt()) {
         matrix.clear();
         matrix.setColor24(db[kk::night_color]);
@@ -200,9 +208,6 @@ LP_TIMER(50, []() {
         matrix.setColor24(db[kk::clock_color]);
         drawClock();
     }
+
     matrix.update();
 });
-
-// LP_TIMER(500, [](){
-//     Serial.println(millis());
-// });
