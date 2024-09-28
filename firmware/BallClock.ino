@@ -1,3 +1,3 @@
-// Это пустой скетч!
-// весь код находится в папке src для удобства работы с Platformio
-// В Arduino IDE данный скетч также будет компилироваться!
+// This is an empty sketch!
+// All the code is located in the src folder for convenience with Platformio
+// This sketch will also compile in the Arduino IDE!
