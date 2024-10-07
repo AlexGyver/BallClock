@@ -101,16 +101,16 @@ static void build(sets::Builder& b) {
     }
 
     if (b.Confirm("ota_update"_h)) {
-        if (b.build().value().toBool()) {
+        if (b.build.value.toBool()) {
             Serial.println("OTA update!");
             ota.update();
         }
     }
 
-    if (b.build().isAction()) {
-        switch (b.build().id()) {
-            case kk::ntp_gmt: NTP.setGMT(b.build().value()); break;
-            case kk::ntp_host: NTP.setHost(b.build().value()); break;
+    if (b.build.isAction()) {
+        switch (b.build.id) {
+            case kk::ntp_gmt: NTP.setGMT(b.build.value); break;
+            case kk::ntp_host: NTP.setHost(b.build.value); break;
         }
     }
 
