@@ -20,7 +20,7 @@ void runString(String str) {
     run.start();
 
     while (run.tick() != RG_FINISH) {
-        delay(0);
+        delay(1);
         yield();
     }
 }
